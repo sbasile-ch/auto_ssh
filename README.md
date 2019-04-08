@@ -62,22 +62,22 @@ For any configured connection in [known-hosts](https://github.com/sbasile-ch/aut
 ex.
 fot the following connection in [known-hosts](https://github.com/sbasile-ch/auto_ssh/blob/master/known_hosts)
 ```shell        
-        wck, f, 11, ,   wcklive, wck2web7.orctel.internal,    alias45
+        chic, b, 7, , chicbeplive, chicweb1v.orctel.internal,    alias45
 ```
 and following entry encrypted in _psw.enc_   (with for example a master password __abc__) 
 ```shell      
             alias45    pass123xxx
 ```
 
-It's possible to ssh directly as
+It's possible to _ssh_ directly as
 ```shell
-assh wck f 11      
+assh chic b 7      
 ```
 
 and typing password __abc__, instead of typing
 
 ```shell
-ssh wcklive@wck2web7.orctel.internal      
+ssh chicbeplive@chicweb1v.orctel.internal      
 ```
 
 and password __pass123xxx__
