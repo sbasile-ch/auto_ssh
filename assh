@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-set PROG_DIR    "$env(HOME)/.auto_ssh/"
+set PROG_DIR    "$env(HOME)/auto_ssh/"
 set FILE_HOSTS  "${PROG_DIR}known_hosts"
 set FILE_PASS   "${PROG_DIR}psw.enc"
 set CIPHER_ALG  "aes-256-cbc"
@@ -149,7 +149,7 @@ proc create_pass_file {} {
     }
     set exit_code [catch {exec cp $FILE_PASS ${FILE_PASS}.bk } errmsg]
     if {$exit_code == 0 } {
-       puts "backup created \[${FILE_PASS}.bk] for old file"
+       puts "created backup: \[${FILE_PASS}.bk] for old file"
     }
 
     if {[init_master_p 1] == 0 } {
@@ -205,8 +205,7 @@ proc main {} {
     set nick2      [lindex $argv 2]
     set nick3      [lindex $argv 3]
 
-    if { [check_args] == 0 } {
-    if { [init] == 0 } {
+    if { ([check_args] == 0 && [init] == 0) } {
         set server_info [get_server_info $category $nick1 $nick2 $nick3]
         set user     [lindex $server_info 0]
         set host     [lindex $server_info 1]
@@ -222,7 +221,6 @@ proc main {} {
                 ssh $user $host $pass
             }
         }
-    }
     }
 }
 
