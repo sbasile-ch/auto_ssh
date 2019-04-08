@@ -35,7 +35,7 @@ first create a clear text file, containing the desired passwords (ex. [passwords
 so 2 tokens separated by blanks (spaces or tabs). The first token (`alias`) is how the password is _aliased_ in the connection definition in the [known-hosts](https://github.com/sbasile-ch/auto_ssh/blob/master/known_hosts) file.
 Ex of connection:
 ```shell        
-        wck, f, 11, ,   wcklive, wck2web7.orctel.internal,    alias
+        chic, b, 7, , chicbeplive, chicweb1v.orctel.internal,    alias
 ```
 The second token is the password in clear text.
 
