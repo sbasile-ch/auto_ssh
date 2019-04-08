@@ -1,0 +1,102 @@
+
+
+category, nick1, nick2, nick3,  user,  server-name,     password-key
+
+
+EWF - FE      .orctel.internal
+ewf,f, 1,   ,  ewflive, ewfweb1v4.orctel.internal,     ewf
+ewf,f, 2,   ,  ewflive, ewfweb2v4.orctel.internal,     ewf
+ewf,f, 3,   ,  ewflive, ewfweb3v4.orctel.internal,     ewf
+ewf,f, 4,   ,  ewflive, ewfweb4v4.orctel.internal,     ewf
+ewf,f, 5,   ,  ewflive, ewfweb5v4.orctel.internal,     ewf
+ewf,f, 6,   ,  ewflive, ewfweb6v4.orctel.internal,     ewf
+ewf,f, 7,   ,  ewflive, ewfweb7v4.orctel.internal,     ewf
+ewf,f, 8,   ,  ewflive, ewfweb8v4.orctel.internal,     ewf
+ewf,f, 9,   ,  ewflive, ewfweb9v4.orctel.internal,     ewf
+ewf,f, 10,  ,  ewflive, ewfweb10v4.orctel.internal,    ewf
+
+    TUXEDO
+ewf,t,1, , ewflive, ewftux1.orctel.internal,     tux
+ewf,t,2, , ewflive, ewftux2.orctel.internal,     tux
+
+    BEPS
+ewf,b, 1, , bewfbeplive, chl-prod-bep1.orctel.internal,     ewf
+ewf,b, 2, , bewfbeplive, chl-prod-bep2.orctel.internal,     ewf
+ewf,b, 3, , bewfbeplive, chl-prod-bep3.orctel.internal,     ewf
+ewf,b, 4, , bewfbeplive, chl-prod-bep4.orctel.internal,     ewf
+
+XML - FE
+xml, f, 1, , xmllive, xmlweb1v4.orctel.internal,     xml
+xml, f, 2, , xmllive, xmlweb2v4.orctel.internal,     xml
+xml, f, 3, , xmllive, xmlweb3v4.orctel.internal,     xml
+xml, f, 4, , xmllive, xmlweb4v4.orctel.internal,     xml
+xml, f, 5, , xmllive, xmlweb5v4.orctel.internal,     xml
+xml, f, 6, , xmllive, xmlweb6v4.orctel.internal,     xml
+
+    TUXEDO
+xml, t, 1, , xmllive, xmltux1el.orctel.internal,     tux
+xml, t, 2, , xmllive, xmltux2el.orctel.internal,     tux
+
+    BEP
+xml, b, 1, , Xmlbeplive, chl-prod-bep1.orctel.internal,     xml
+xml, b, 2, , xmlbeplive, chl-prod-bep2.orctel.internal,     xml
+
+CHD - FE *1,2,3,4
+chd, f, 1, , chd3live, chdweb1v4.orctel.internal,     chd
+chd, f, 1, , chd3live, chdweb2v4.orctel.internal,     chd
+chd, f, 1, , chd3live, chdweb3v4.orctel.internal,     chd
+chd, f, 1, , chd3live, chdweb4v4.orctel.internal,     chd
+
+    TUXEDO
+chd, t, 1, , chd3live, chdtux1.orctel.internal,     tux
+chd, t, 2, , chd3live, chdtux2.orctel.internal,     tux
+
+    BEP
+chd, b, 1, , chd3beplive, chdtux1.orctel.internal,     chd
+chd, b, 2, , chd3beplive, chdtux2.orctel.internal,     chd
+
+CHIC
+
+    FE *1 and 2
+chic, f, 1, , chiclive, chicweb1v.orctel.internal,     dismissed
+chic, f, 2, , chiclive, chicweb2v.orctel.internal,     dismissed
+
+    TUXEDO
+chic, t, 1, , chiclive, wck2tux3.orctel.internal,     tux
+chic, t, 2, , chiclive, wck2tux4.orctel.internal,     tux
+
+    BEP *1 and 2
+chic, b, 1, , chicbeplive, chicweb1v.orctel.internal,     dismissed
+chic, b, 2, , chicbeplive, chicweb2v.orctel.internal,     dismissed
+
+
+VERTEX - FE
+vert, f, 1, , ceulive, chcc-web1.orctel.internal,     2fa
+vert, f, 1, , ceulive, chcc-web2.orctel.internal,     2fa
+vert, t, 1, , ceulive, chdtux1.orctel.internal,       2fa
+vert, t, 1, , ceulive, chdtux2.orctel.internal,       2fa
+vert, b, 1, , ceubeplive, vtux1el.orctel.internal.orctel.internal,     2fa
+vert, b, 1, , ceubeplive, vtux2el.orctel.internal.orctel.internal,     2fa
+
+WEBCHECK - FE - 12
+wck, f, 1, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 2, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 3, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 4, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 5, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 6, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 7, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 8, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 9, ,    wcklive, wck2web7.orctel.internal,    wck
+wck, f, 10, ,   wcklive, wck2web7.orctel.internal,    wck
+wck, f, 11, ,   wcklive, wck2web7.orctel.internal,    wck
+wck, f, 12, ,   wcklive, wck2web7.orctel.internal,    wck
+
+WEBCHECK - BEP - 4
+wck, b, 1, ,    wckbeplive, wck2tux3.orctel.internal,  wck
+wck, b, 2, ,    wckbeplive, wck2tux3.orctel.internal,  wck
+wck, b, 3, ,    wckbeplive, wck2tux3.orctel.internal,  wck
+wck, b, 4, ,    wckbeplive, wck2tux3.orctel.internal,  wck
+wck, b, 5, ,    wckbeplive, wck2tux3.orctel.internal,  wck
+
+
