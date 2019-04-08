@@ -1,5 +1,5 @@
 # Auto SSH
-This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the 'master password' of where all the passords are stored. All the passwords are stored in an encrypted file, so that, obtaining any requires to open that file. Remembering a single _password_ without bothering to remember every single connection's _password_ is the aim of this auto-ssh.
+This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the 'master password' of where all the _passwords_ are stored. They are stored in an encrypted file, so that, obtaining any of them, requires to decrypt it via a __master password__. Remembering a single _password_ without bothering to remember every single connection's _password_ is the one aim of this auto-ssh. For not critical connections, future versions of this script could accept alternative ways to provide the _master password_ having then a full automatic login.
 
 ## requisites
 * [expect](https://en.wikipedia.org/wiki/Expect)
