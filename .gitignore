@@ -1,0 +1,12 @@
+# Vim temporary and swap files
+.*.swp
+.*.swo
+*~
+
+# misc files
+*.zip
+*.log
+
+# password file
+psw.enc
+
