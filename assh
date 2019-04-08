@@ -46,7 +46,7 @@ proc get_pass_val {pass_key} {
     if {$exit_code == 0 } {
         foreach line $pass_list {
             if [
-               regexp -nocase "\^\[ \\t\]\*${pass_key}\[ \\t]+\(\[\^ \\t\]\+\)" $line match pass_val
+               regexp -nocase "\^\[ \\t\]\*${pass_key}\[ \\t]\*,\(\.\+\)" $line match pass_val
                ] then {
                puts " found     = \[$pass_val\]"
                break
