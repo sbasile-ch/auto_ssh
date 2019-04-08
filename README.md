@@ -68,7 +68,7 @@ fot the following connection in [known-hosts](https://github.com/sbasile-ch/auto
 ```
 and following entry encrypted in _psw.enc_   (with for example a master password __abc__)
 ```shell
-            alias45    pass123xxx
+            alias45    ,pass123xxx
 ```
 
 It's possible to _ssh_ directly as
