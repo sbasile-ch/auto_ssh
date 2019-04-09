@@ -11,6 +11,7 @@ proc get_server_info {category nick1 nick2 nick3} {
     global FILE_HOSTS
 
     set host ""
+    set user ""
     set pass_key ""
 
     set fp [open $FILE_HOSTS r]
