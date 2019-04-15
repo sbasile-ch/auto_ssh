@@ -1,9 +1,12 @@
 #!/usr/bin/expect -f
 
-set PROG_DIR    "$env(HOME)/auto_ssh/"
-set FILE_HOSTS  "${PROG_DIR}known_hosts"
-set FILE_PASS   "${PROG_DIR}psw.enc"
-set CIPHER_ALG  "aes-256-cbc"
+package require cmdline
+
+set OPTIONS     ()
+
+# read config from outside
+source config
+
 set MASTER_PASS ""
 
 # ------------------------------------------------------------------------------
@@ -27,13 +30,43 @@ proc get_server_info {category nick1 nick2 nick3} {
     return [list $user $host $pass_key]
 }
 # ------------------------------------------------------------------------------
-proc read_pass_file {master_p} {
+proc read_pass_file {masterp} {
     global CIPHER_ALG
     global FILE_PASS
 
-    set exit_code [catch {exec openssl $CIPHER_ALG -d -pass pass:$master_p -in $FILE_PASS} pass_list]
+    set exit_code [catch {exec openssl $CIPHER_ALG -d -pass pass:$masterp -in $FILE_PASS} pass_list]
 
     return [list $exit_code $pass_list]
+}
+# ------------------------------------------------------------------------------
+proc get_masterp_from_env {} {
+    global env
+    global CIPHER_ALG
+    global MASTER_PASS
+    global CONFIG_MP_KEY
+    global CONFIG_MP
+
+    catch {set env_value "$env($CONFIG_MP)"} err
+    set exit_code [catch {exec echo $env_value | openssl $CIPHER_ALG -d -a -pass pass:$CONFIG_MP_KEY} decrypt ]
+    if {$exit_code != 0 } {
+        puts "Unable to read master-password from env-var"
+        set decrypt [prompt_for_masterp]
+    }
+    if {$decrypt ne "" } {
+        set MASTER_PASS $decrypt
+    }
+}
+# ------------------------------------------------------------------------------
+proc set_masterp_for_env {} {
+    global CIPHER_ALG
+    global CONFIG_MP_KEY
+
+    set masterp [prompt_for_masterp]
+    set exit_code [catch {exec echo $masterp | openssl $CIPHER_ALG -a -pass pass:$CONFIG_MP_KEY} encrypt ]
+    if {$exit_code == 0 } {
+        set $encrypt ""
+    }
+    return $encrypt
 }
 # ------------------------------------------------------------------------------
 proc get_pass_val {pass_key} {
@@ -49,7 +82,6 @@ proc get_pass_val {pass_key} {
             if [
                regexp -nocase "\^\[ \\t\]\*${pass_key}\[ \\t]\*,\(\.\+\)" $line match pass_val
                ] then {
-               puts " found     = \[$pass_val\]"
                break
             }
         }
@@ -68,9 +100,7 @@ proc ssh {user host pass} {
 }
 
 # ------------------------------------------------------------------------------
-proc init_master_p {accept} {
-    global FILE_PASS
-    global MASTER_PASS
+proc prompt_for_masterp {} {
 
     stty -echo
     send_user -- "give master password:"
@@ -83,69 +113,63 @@ proc init_master_p {accept} {
     #   exit
     #}
 
-    set master_p $expect_out(1,string)
-
-    if {$accept == 0} {
-        set result [read_pass_file $master_p]
-        set exit_code [lindex $result 0]
-        if {$exit_code == 0} {
-            set accept 1
-        }
-    }
-
-    if {$accept == 1} {
-        set MASTER_PASS $master_p
-        return 0
-    }
-    puts "Master password doesn't match with $FILE_PASS"
-    return 1
+    return $expect_out(1,string)
 }
 # ------------------------------------------------------------------------------
-proc print_help {} {
-    global FILE_HOSTS
+proc init_masterp {accept} {
     global FILE_PASS
-    set prog   [info script]
-    puts " $prog \[-d]\[-c file] \[category \[nick1] \[nick2] \[nick3]]\n"
-    puts "\t- \[-d] dump the password file $FILE_PASS"
-    puts "\t- \[-c file] create a password file $FILE_PASS"
-    puts "\t- \[category \[nick1] \[nick2] \[nick3]] ssh into the server matched in $FILE_HOSTS"
-}
-# ------------------------------------------------------------------------------
-proc dump_pass_file {} {
-    global argv
     global MASTER_PASS
 
-    if {[init_master_p 1] == 0 } {
+    if { $MASTER_PASS eq "" } {
+        set masterp [prompt_for_masterp]
+
+        if {$accept == 0} {
+            set result [read_pass_file $masterp]
+            set exit_code [lindex $result 0]
+            if {$exit_code == 0} {
+                set accept 1
+            }
+        }
+
+        if {$accept == 1} {
+            set MASTER_PASS $masterp
+            return 0
+        }
+        puts "Master password doesn't match with $FILE_PASS"
+        return 1
+    }
+    return 0
+}
+# ------------------------------------------------------------------------------
+proc dump_pass_file {filename} {
+    global MASTER_PASS
+
+    set err [init_masterp 1]
+    if {$err == 0} {
 
         set result [read_pass_file $MASTER_PASS]
         set exit_code [lindex $result 0]
 
         if {$exit_code == 0 } {
-            set file   [lindex $argv 1]
-            if {$file eq "" } {
-                puts "output file not specified"
-                return
-            }
-            if [catch {set fp [open $file w] } errmsg] {
-                puts "unable to create file $file"
-                return
+            if [catch {set fp [open $filename w] } errmsg] {
+                puts "unable to create file $filename"
+                return 1
             }
 
             puts $fp [lindex $result 1]
             close $fp
         }
     }
+    return $err
 }
 # ------------------------------------------------------------------------------
-proc create_pass_file {} {
-    global argv
+proc create_pass_file {filename} {
     global MASTER_PASS
     global FILE_PASS
     global CIPHER_ALG
 
-    set file   [lindex $argv 1]
-    if {[file exist $file] != 1} {
-        puts "input file $file does not exist"
+    if {[file exist $filename] != 1} {
+        puts "file $filename does not exist"
         return
     }
     set exit_code [catch {exec cp $FILE_PASS ${FILE_PASS}.bk } errmsg]
@@ -153,8 +177,8 @@ proc create_pass_file {} {
        puts "created backup: \[${FILE_PASS}.bk] for old file"
     }
 
-    if {[init_master_p 1] == 0 } {
-        exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $file -out $FILE_PASS
+    if {[init_masterp 1] == 0 } {
+        exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $filename -out $FILE_PASS
     }
 }
 # ------------------------------------------------------------------------------
@@ -171,42 +195,64 @@ proc init {} {
         puts "missing file $FILE_PASS "
         return 1
     }
-    if {[init_master_p 0] != 0 } {
+    if {[init_masterp 0] != 0 } {
         return 1
     }
     return 0
 }
 # ------------------------------------------------------------------------------
 proc check_args {} {
-    global argv
-    set arg1   [lindex $argv 0]
+    global FILE_HOSTS
+    global MASTER_PASS
+   # global FILE_PASS
 
-    if {($arg1 eq "" || $arg1 eq "-h")} {
-       print_help
-       return 1
+    set usage "\[-c file]\[-d file]\[-mp] \[category \[nick1] \[nick2] \[nick3]]\n"
+    append usage "---- prog to ssh into a server matched in $FILE_HOSTS\n"
+
+    set parameters {
+        {c.arg  ""   "create a password-file"}
+        {d.arg  ""   "dump the password-file into the specified file"}
+        {mp     ""   "use config master-password"}
+        {cmp    ""   "create master-password"}
     }
-    if {$arg1 eq "-d" } {
-       dump_pass_file
-       return 1
+    if {[catch {array set options [cmdline::getoptions ::argv $parameters $usage]} errmsg]} {
+         puts $errmsg
+         return 1
     }
-    if {$arg1 eq "-c" } {
-       create_pass_file
-       return 1
+
+    if {$options(cmp) != 0} {     # propmpt for a string and return it encrypted
+        set masterp [set_masterp_for_env ]
+        puts $masterp
+        return 1
+    } else {
+        if {$options(mp) != 0} {  # init master-p from env-var
+            get_masterp_from_env
+        }
+
+        if {$options(d) ne ""} {  # dump
+            set finish [dump_pass_file $options(d)]
+            return 1
+        } elseif { $options(c) ne ""} { # create
+            set finish [create_pass_file $options(c)]
+            return 1
+        }
     }
     return 0
 }
+
 # ------------------------------------------------------------------------------
 proc main {} {
     global FILE_HOSTS
     global FILE_PASS
     global argv
 
-    set category   [lindex $argv 0]
-    set nick1      [lindex $argv 1]
-    set nick2      [lindex $argv 2]
-    set nick3      [lindex $argv 3]
-
     if { ([check_args] == 0 && [init] == 0) } {
+
+        set category   [lindex $argv 0]
+        set nick1      [lindex $argv 1]
+        set nick2      [lindex $argv 2]
+        set nick3      [lindex $argv 3]
+
         set server_info [get_server_info $category $nick1 $nick2 $nick3]
         set user     [lindex $server_info 0]
         set host     [lindex $server_info 1]
@@ -227,4 +273,5 @@ proc main {} {
 
 # ------------------------------------------------------------------------------
 main
+
 
