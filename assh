@@ -2,12 +2,18 @@
 
 package require cmdline
 
-set OPTIONS     ()
+set PROG_DIR  "$env(HOME)/auto_ssh/"
 
 # read config from outside
-source config
+source "${PROG_DIR}config"
 
 set MASTER_PASS ""
+set PARAMETERS {
+    {c.arg  ""   "create a password-file, encrypting the file provided."}
+    {d.arg  ""   "dump the password-file into the specified file."}
+    {mp          "retrieve master-password from ENV."}
+    {cmp         "encrypt a string asked on prompt. (Useful to set the master-password in an ENV var)."}
+}
 
 # ------------------------------------------------------------------------------
 proc get_server_info {category nick1 nick2 nick3} {
@@ -30,31 +36,50 @@ proc get_server_info {category nick1 nick2 nick3} {
     return [list $user $host $pass_key]
 }
 # ------------------------------------------------------------------------------
-proc read_pass_file {masterp} {
+proc read_pass_file {} {
     global CIPHER_ALG
+    global MASTER_PASS
     global FILE_PASS
 
-    set exit_code [catch {exec openssl $CIPHER_ALG -d -pass pass:$masterp -in $FILE_PASS} pass_list]
+    set exit_code [catch {exec openssl $CIPHER_ALG -d -pass pass:$MASTER_PASS -in $FILE_PASS} pass_list]
+    if {$exit_code != 0 } {
+        puts "Master password doesn't match with $FILE_PASS"
+    }
 
     return [list $exit_code $pass_list]
 }
 # ------------------------------------------------------------------------------
-proc get_masterp_from_env {} {
+proc prompt_for_masterp {} {
+
+    stty -echo
+    send_user -- "give master password:"
+    expect_user -re "(.*)\n"
+    send_user "\n"
+    stty echo
+
+    #set input $expect_out(0,string)
+    #if {$input eq ""} { # timeout and nothing entered
+    #   exit
+    #}
+
+    return $expect_out(1,string)
+}
+# ------------------------------------------------------------------------------
+proc init_masterp {from_env} {
     global env
     global CIPHER_ALG
     global MASTER_PASS
     global CONFIG_MP_KEY
     global CONFIG_MP
 
-    catch {set env_value "$env($CONFIG_MP)"} err
-    set exit_code [catch {exec echo $env_value | openssl $CIPHER_ALG -d -a -pass pass:$CONFIG_MP_KEY} decrypt ]
-    if {$exit_code != 0 } {
+    if { $from_env } {
+        catch {set env_value "$env($CONFIG_MP)"} err
+        set exit_code [catch {exec echo $env_value | openssl $CIPHER_ALG -d -a -pass pass:$CONFIG_MP_KEY} MASTER_PASS ]
+        if {$exit_code == 0 } { return }
+
         puts "Unable to read master-password from env-var"
-        set decrypt [prompt_for_masterp]
     }
-    if {$decrypt ne "" } {
-        set MASTER_PASS $decrypt
-    }
+    set MASTER_PASS [prompt_for_masterp]
 }
 # ------------------------------------------------------------------------------
 proc set_masterp_for_env {} {
@@ -73,7 +98,7 @@ proc get_pass_val {pass_key} {
     global MASTER_PASS
     set pass_val ""
 
-    set result [read_pass_file $MASTER_PASS]
+    set result [read_pass_file]
     set exit_code [lindex $result 0]
     set pass_list [split [lindex $result 1] "\n" ]
 
@@ -88,79 +113,21 @@ proc get_pass_val {pass_key} {
     }
     return $pass_val
 }
-
-# ------------------------------------------------------------------------------
-proc ssh {user host pass} {
-    # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
-    spawn ssh -o "StrictHostKeyChecking no" ${user}@$host
-        expect "assword:*"
-        send -- "$pass\r"
-        send -- "\r"
-        interact
-}
-
-# ------------------------------------------------------------------------------
-proc prompt_for_masterp {} {
-
-    stty -echo
-    send_user -- "give master password:"
-    expect_user -re "(.*)\n"
-    send_user "\n"
-    stty echo
-
-    #set input $expect_out(0,string)
-    #if {$input eq ""} { # timeout and nothing entered
-    #   exit
-    #}
-
-    return $expect_out(1,string)
-}
-# ------------------------------------------------------------------------------
-proc init_masterp {accept} {
-    global FILE_PASS
-    global MASTER_PASS
-
-    if { $MASTER_PASS eq "" } {
-        set masterp [prompt_for_masterp]
-
-        if {$accept == 0} {
-            set result [read_pass_file $masterp]
-            set exit_code [lindex $result 0]
-            if {$exit_code == 0} {
-                set accept 1
-            }
-        }
-
-        if {$accept == 1} {
-            set MASTER_PASS $masterp
-            return 0
-        }
-        puts "Master password doesn't match with $FILE_PASS"
-        return 1
-    }
-    return 0
-}
 # ------------------------------------------------------------------------------
 proc dump_pass_file {filename} {
     global MASTER_PASS
 
-    set err [init_masterp 1]
-    if {$err == 0} {
+    set result [read_pass_file]
+    set exit_code [lindex $result 0]
 
-        set result [read_pass_file $MASTER_PASS]
-        set exit_code [lindex $result 0]
-
-        if {$exit_code == 0 } {
-            if [catch {set fp [open $filename w] } errmsg] {
-                puts "unable to create file $filename"
-                return 1
-            }
-
+    if {$exit_code == 0 } {
+        if [catch {set fp [open $filename w] }] {
+            puts "unable to create file $filename"
+        } else {
             puts $fp [lindex $result 1]
             close $fp
         }
     }
-    return $err
 }
 # ------------------------------------------------------------------------------
 proc create_pass_file {filename} {
@@ -177,13 +144,19 @@ proc create_pass_file {filename} {
        puts "created backup: \[${FILE_PASS}.bk] for old file"
     }
 
-    if {[init_masterp 1] == 0 } {
-        exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $filename -out $FILE_PASS
-    }
+    exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $filename -out $FILE_PASS
 }
 # ------------------------------------------------------------------------------
-proc init {} {
-    global MASTER_PASS
+proc ssh {user host pass} {
+    # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
+    spawn ssh -o "StrictHostKeyChecking no" ${user}@$host
+        expect "assword:*"
+        send -- "$pass\r"
+        send -- "\r"
+        interact
+}
+# ------------------------------------------------------------------------------
+proc check_files {} {
     global FILE_HOSTS
     global FILE_PASS
 
@@ -195,80 +168,88 @@ proc init {} {
         puts "missing file $FILE_PASS "
         return 1
     }
-    if {[init_masterp 0] != 0 } {
-        return 1
-    }
     return 0
 }
 # ------------------------------------------------------------------------------
-proc check_args {} {
+proc print_usage {} {
+    global PARAMETERS
     global FILE_HOSTS
-    global MASTER_PASS
-   # global FILE_PASS
 
-    set usage "\[-c file]\[-d file]\[-mp] \[category \[nick1] \[nick2] \[nick3]]\n"
-    append usage "---- prog to ssh into a server matched in $FILE_HOSTS\n"
-
-    set parameters {
-        {c.arg  ""   "create a password-file"}
-        {d.arg  ""   "dump the password-file into the specified file"}
-        {mp     ""   "use config master-password"}
-        {cmp    ""   "create master-password"}
+    set usage ""
+    foreach p $PARAMETERS {
+        set p_name     [lindex $p 0]
+        regsub {\.arg$} $p_name { file} p_name
+        append usage  "\[-$p_name]"
     }
-    if {[catch {array set options [cmdline::getoptions ::argv $parameters $usage]} errmsg]} {
-         puts $errmsg
-         return 1
-    }
-
-    if {$options(cmp) != 0} {     # propmpt for a string and return it encrypted
-        set masterp [set_masterp_for_env ]
-        puts $masterp
-        return 1
-    } else {
-        if {$options(mp) != 0} {  # init master-p from env-var
-            get_masterp_from_env
-        }
-
-        if {$options(d) ne ""} {  # dump
-            set finish [dump_pass_file $options(d)]
-            return 1
-        } elseif { $options(c) ne ""} { # create
-            set finish [create_pass_file $options(c)]
-            return 1
-        }
-    }
-    return 0
+    append usage " \[category \[nick1] \[nick2] \[nick3]]\n"
+    append usage "\n\t prog to ssh into the server matched in $FILE_HOSTS by category/nick1/nick2/nick3\n"
+    puts [cmdline::usage $PARAMETERS $usage]
 }
-
 # ------------------------------------------------------------------------------
 proc main {} {
+    global argv
     global FILE_HOSTS
     global FILE_PASS
-    global argv
+    global PARAMETERS
+    global MASTER_PASS
 
-    if { ([check_args] == 0 && [init] == 0) } {
+    set err 0
 
+    while {1} {
+
+        if { [catch {array set options [cmdline::getoptions ::argv $PARAMETERS]}] } {
+            set err 1
+            break
+        }
+
+        if { $options(cmp) != 0 } { # 1. propmpt for a string and return it encrypted
+            set masterp [set_masterp_for_env ]
+            puts $masterp
+            break
+        }
+
+        init_masterp $options(mp)
+
+
+        if { $options(d) ne "" } {  # 2. dump
+            dump_pass_file $options(d)
+            break
+        }
+        if { $options(c) ne "" } {  # 3. create
+            create_pass_file $options(c)
+            break
+        }
+
+        #--------------------------   4. then go for ssh
         set category   [lindex $argv 0]
         set nick1      [lindex $argv 1]
         set nick2      [lindex $argv 2]
         set nick3      [lindex $argv 3]
+
+        if { $category eq "" || [check_files] != 0 } { # ssh
+            set err 1
+            break
+        }
 
         set server_info [get_server_info $category $nick1 $nick2 $nick3]
         set user     [lindex $server_info 0]
         set host     [lindex $server_info 1]
         set pass_key [lindex $server_info 2]
 
-        if {$pass_key eq "" } {
+        if { $pass_key eq "" } {
             puts "no match found for \[$category\] \[$nick1\] \[$nick2\] \[$nick3\] in $FILE_HOSTS"
         } else {
             set pass [get_pass_val $pass_key]
-            if {$pass eq "" } {
+            if { $pass eq "" } {
                 puts "no key found for \[${pass_key}\] in ${FILE_PASS}"
             } else {
                 ssh $user $host $pass
             }
         }
+        break
     }
+
+    if { $err != 0 } { print_usage }
 }
 
 # ------------------------------------------------------------------------------
