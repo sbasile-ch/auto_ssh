@@ -91,6 +91,34 @@ ssh chicbeplive@chicweb1v.orctel.internal
 
 and password __pass123xxx__
 
+
+### ssh with no master-password typed
+
+It's possible to `ssh` into a server with no password typed at all, providing the flag `-mp`
+
+```shell
+assh -- -mp chic b 7       #note the '--' as explained in the limitations
+```
+What the `-mp` flag does, is to read the _master-password_ from the `ENV` variable whose name is the value of `CONFIG_MP` in [config](https://github.com/sbasile-ch/auto_ssh/blob/1f894d89025eb40f4e42917e5d5b5b290ba9a105/config#L6) 
+So if the _config_ has this entry
+```shell
+set CONFIG_MP       "AUTO_SSH_CONFIG_MP"      
+```
+the _master-password_ will be the value of `$AUTO_SSH_CONFIG_MP`
+Acutally to have it not in clear text (which could just be shown with an `env` command), there is a tiny intermidiate step of encryption/decryption of that value.
+The encryption key used is the value of `CONFIG_MP_KEY` in the [config](https://github.com/sbasile-ch/auto_ssh/blob/1f894d89025eb40f4e42917e5d5b5b290ba9a105/config#L5) file
+The 2 steps to use the `-mp` flag would then be:
+
+```shell
+# 1. - define an encrypted value for the master password
+assh -- -cmp   # suppose it returns [U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=]
+
+# 2. - assign that value to the variable named in CONFIG_MP 
+export AUTO_SSH_CONFIG_MP=U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=
+```
+
+Of course it's still possible to reverse the steps to have the master-password in clear text. It only requires more time than just an `echo $AUTO_SSH_CONFIG_MP`. Is up to the user to decide when/if that usage is safe enough.
+
 ## TODO
 
 remove the limitations.
