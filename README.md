@@ -1,6 +1,6 @@
 # Auto SSH
 
-This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the 'master password' of where all the _passwords_ are stored. They are stored in an encrypted file, so that, obtaining any of them, requires to decrypt it via a __master password__. Remembering a single _password_ without bothering to remember every single connection's _password_ is  one aim of this auto-ssh. For not critical connections, future versions of this script could accept alternative ways to provide the _master password_ having then a full automatic login.
+This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the __master password__ of where all the _passwords_ are stored. They are stored in an encrypted file, so that, obtaining any of them, requires to decrypt it via a _master password_. Remembering a single _password_ without bothering to remember every single connection's _password_ is  one aim of this auto-ssh. For not critical connections, the script accepts an alternative ways to provide the _master password_ having it stored in an ENV variable for full automatic login.
 
 ## requisites
 
@@ -12,12 +12,11 @@ This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh_
 
 * It requires `openssl` which could be not available for _SSH_ version not built on top of it.
 
-* There is no way, currently, to provide the master password if not just typing it. Ongoing development intends to relax this constraint, storing the _master password_ somwhere (`ENV-var`, `file`, ...) and requiring no sort of interactive input at all. This could be usefull, for not critical connections, especially once also the feature to have more than 1 _passwords-file_ (and so different _master passwords_ for each) will be implemented.
-
-* Currently there is in fact only 1 _passwords-file_ (with its own _master password_)
+* There is no way, currently, to have more than 1 _passwords-file_ (and so different _master passwords_ for each).
 
 * being an [expect](https://en.wikipedia.org/wiki/Expect) script, the script's flags (ex __-d__
 and __-c__ or __-h__) are parsed still by _expect_ itself and not forwarded to be parsed separately. They then need to be preceeded by the usual end-of-options sequence: "--"
+This means that instead of just `auto_ssh -d clear.txt -mp` I must type `auto_ssh -- -d clear.txt -mp`
 
 ## installation
 
