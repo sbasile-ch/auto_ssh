@@ -1,7 +1,6 @@
 
-set PROG_DIR        "$env(HOME)/auto_ssh/"
-set FILE_HOSTS      "${PROG_DIR}known_hosts"
-set FILE_PASS       "${PROG_DIR}psw.enc"
+set FILE_HOSTS      "${PROG_DIR}/known_hosts"
+set FILE_PASS       "${PROG_DIR}/psw.enc"
 set CIPHER_ALG      "aes-256-cbc"
 set CONFIG_MP_KEY   "autosshkey"
 set CONFIG_MP       "AUTO_SSH_CONFIG_MP"

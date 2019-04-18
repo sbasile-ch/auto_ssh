@@ -2,10 +2,15 @@
 
 package require cmdline
 
-set PROG_DIR  "$env(HOME)/auto_ssh/"
+proc getDirectory {} {
+    variable myLocation [file normalize [info script]]
+    return [file dirname $myLocation]
+}
+
+set PROG_DIR  [getDirectory]
 
 # read config from outside
-source "${PROG_DIR}config"
+source "${PROG_DIR}/config"
 
 set MASTER_PASS ""
 set PARAMETERS {
