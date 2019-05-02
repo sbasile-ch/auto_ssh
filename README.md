@@ -1,6 +1,6 @@
 # Auto SSH
 
-This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the 'master password' of where all the _passwords_ are stored. They are stored in an encrypted file, so that, obtaining any of them, requires to decrypt it via a __master password__. Remembering a single _password_ without bothering to remember every single connection's _password_ is  one aim of this auto-ssh. For not critical connections, future versions of this script could accept alternative ways to provide the _master password_ having then a full automatic login.
+This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh__ into a server providing just an alias for that connection. It automatically fills the password for that connection, asking instead the __master password__ of where all the _passwords_ are stored. They are stored in an encrypted file, so that, obtaining any of them, requires to decrypt it via a _master password_. Remembering a single _password_ without bothering to remember every single connection's _password_ is  one aim of this auto-ssh. For not critical connections, the script accepts an alternative ways to provide the _master password_ having it stored in an ENV variable for full automatic login.
 
 ## requisites
 
@@ -12,12 +12,11 @@ This [expect](https://en.wikipedia.org/wiki/Expect) script allows to auto __ssh_
 
 * It requires `openssl` which could be not available for _SSH_ version not built on top of it.
 
-* There is no way, currently, to provide the master password if not just typing it. Ongoing development intends to relax this constraint, storing the _master password_ somwhere (`ENV-var`, `file`, ...) and requiring no sort of interactive input at all. This could be usefull, for not critical connections, especially once also the feature to have more than 1 _passwords-file_ (and so different _master passwords_ for each) will be implemented.
-
-* Currently there is in fact only 1 _passwords-file_ (with its own _master password_)
+* There is no way, currently, to have more than 1 _passwords-file_ (and so different _master passwords_ for each).
 
 * being an [expect](https://en.wikipedia.org/wiki/Expect) script, the script's flags (ex __-d__
 and __-c__ or __-h__) are parsed still by _expect_ itself and not forwarded to be parsed separately. They then need to be preceeded by the usual end-of-options sequence: "--"
+This means that instead of just `auto_ssh -d clear.txt -mp` I must type `auto_ssh -- -d clear.txt -mp`
 
 ## installation
 
@@ -91,6 +90,34 @@ ssh chicbeplive@chicweb1v.orctel.internal
 ```
 
 and password __pass123xxx__
+
+
+### ssh with no master-password typed
+
+It's possible to `ssh` into a server with no password typed at all, providing the flag `-mp`
+
+```shell
+assh -- -mp chic b 7       #note the '--' as explained in the limitations
+```
+What the `-mp` flag does, is to read the _master-password_ from the `ENV` variable whose name is the value of `CONFIG_MP` in [config](https://github.com/sbasile-ch/auto_ssh/blob/1f894d89025eb40f4e42917e5d5b5b290ba9a105/config#L6) 
+So if the _config_ has this entry
+```shell
+set CONFIG_MP       "AUTO_SSH_CONFIG_MP"      
+```
+the _master-password_ will be the value of `$AUTO_SSH_CONFIG_MP`
+Acutally to have it not in clear text (which could just be shown with an `env` command), there is a tiny intermidiate step of encryption/decryption of that value.
+The encryption key used is the value of `CONFIG_MP_KEY` in the [config](https://github.com/sbasile-ch/auto_ssh/blob/1f894d89025eb40f4e42917e5d5b5b290ba9a105/config#L5) file
+The 2 steps to use the `-mp` flag would then be:
+
+```shell
+# 1. - define an encrypted value for the master password
+assh -- -cmp   # suppose it returns [U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=]
+
+# 2. - assign that value to the variable named in CONFIG_MP 
+export AUTO_SSH_CONFIG_MP=U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=
+```
+
+Of course it's still possible to reverse the steps to have the master-password in clear text. It only requires more time than just an `echo $AUTO_SSH_CONFIG_MP`. Is up to the user to decide when/if that usage is safe enough.
 
 ## TODO
 
