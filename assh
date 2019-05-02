@@ -16,6 +16,7 @@ set MASTER_PASS ""
 set PARAMETERS {
     {c.arg  ""   "create a password-file, encrypting the file provided."}
     {d.arg  ""   "dump the password-file into the specified file."}
+    {x.arg  ""   "extract only the specified password."}
     {mp          "retrieve master-password from ENV."}
     {cmp         "encrypt a string asked on prompt. (Useful to set the master-password in an ENV var)."}
 }
@@ -99,7 +100,7 @@ proc set_masterp_for_env {} {
     return $encrypt
 }
 # ------------------------------------------------------------------------------
-proc get_pass_val {pass_key} {
+proc get_pass_val {type pass_key} {
     global MASTER_PASS
     set pass_val ""
 
@@ -108,9 +109,14 @@ proc get_pass_val {pass_key} {
     set pass_list [split [lindex $result 1] "\n" ]
 
     if {$exit_code == 0 } {
+        if { $type eq "i" } {
+            set regex_str "\^\[ \\t\]\*i:\[ \\t]\*${pass_key}\[ \\t]\*,\(\.\+\)"
+        } else {
+            set regex_str "\^\[ \\t\]\*${pass_key}\[ \\t]\*,\(\.\+\)"
+        }
         foreach line $pass_list {
             if [
-               regexp -nocase "\^\[ \\t\]\*${pass_key}\[ \\t]\*,\(\.\+\)" $line match pass_val
+               regexp -nocase $regex_str $line match pass_val
                ] then {
                break
             }
@@ -152,13 +158,18 @@ proc create_pass_file {filename} {
     exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $filename -out $FILE_PASS
 }
 # ------------------------------------------------------------------------------
-proc ssh {user host pass} {
-    # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
-    spawn ssh -o "StrictHostKeyChecking no" ${user}@$host
-        expect "assword:*"
-        send -- "$pass\r"
-        send -- "\r"
-        interact
+proc ssh {type user host pass} {
+    if { $type eq "i" } {
+        regsub -all {[ \t]} $pass {} pass
+        spawn ssh -i  $pass ${user}@$host
+    } else {
+        # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
+        spawn ssh -o "StrictHostKeyChecking no" ${user}@$host
+            expect "assword:*"
+            send -- "$pass\r"
+            send -- "\r"
+    }
+    interact
 }
 # ------------------------------------------------------------------------------
 proc check_files {} {
@@ -225,7 +236,13 @@ proc main {} {
             break
         }
 
-        #--------------------------   4. then go for ssh
+        if { $options(x) ne "" } {  # 4 extract only password
+            set pass [get_pass_val "" $options(x)]
+            puts $pass
+            break
+        }
+
+        #--------------------------   5. then go for ssh
         set category   [lindex $argv 0]
         set nick1      [lindex $argv 1]
         set nick2      [lindex $argv 2]
@@ -244,11 +261,24 @@ proc main {} {
         if { $pass_key eq "" } {
             puts "no match found for \[$category\] \[$nick1\] \[$nick2\] \[$nick3\] in $FILE_HOSTS"
         } else {
-            set pass [get_pass_val $pass_key]
-            if { $pass eq "" } {
-                puts "no key found for \[${pass_key}\] in ${FILE_PASS}"
-            } else {
-                ssh $user $host $pass
+            if [
+               regexp -nocase "\(\[\^:\]\*\):\?(\.\*\)\$" $pass_key match type val
+               ] then {
+
+                if { $type eq "2fa" } {      # "2fa:" dual factor auth.  Not much we can do. Just print the ssh command
+                    puts "ssh $user@$host"
+                } else {
+                    if { $val eq "" } {      # :xxxxx or xxxxx are matched all into $type. Swap with $val"
+                        set val $type
+                        set type ""
+                    }
+                    set pass [get_pass_val $type $val]
+                    if { $pass eq "" } {
+                        puts "no pass found for type:\[${type}\] val:\[${val}\] in ${FILE_PASS}"
+                    } else {
+                        ssh $type $user $host $pass
+                    }
+                }
             }
         }
         break
