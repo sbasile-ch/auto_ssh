@@ -55,20 +55,20 @@ proc read_pass_file {} {
     return [list $exit_code $pass_list]
 }
 # ------------------------------------------------------------------------------
-proc prompt_for_masterp {} {
+proc prompt_for_masterp {prompt_text} {
+
+    set input ""
 
     stty -echo
-    send_user -- "give master password:"
+    send_user -- $prompt_text
     expect_user -re "(.*)\n"
     send_user "\n"
     stty echo
 
-    #set input $expect_out(0,string)
-    #if {$input eq ""} { # timeout and nothing entered
-    #   exit
-    #}
+    catch {set input $expect_out(1,string)}
+    if { $input eq "" } { exit }
 
-    return $expect_out(1,string)
+    return $input
 }
 # ------------------------------------------------------------------------------
 proc init_masterp {from_env} {
@@ -85,14 +85,14 @@ proc init_masterp {from_env} {
 
         puts "Unable to read master-password from env-var"
     }
-    set MASTER_PASS [prompt_for_masterp]
+    set MASTER_PASS [prompt_for_masterp "give master password:"]
 }
 # ------------------------------------------------------------------------------
 proc set_masterp_for_env {} {
     global CIPHER_ALG
     global CONFIG_MP_KEY
 
-    set masterp [prompt_for_masterp]
+    set masterp [prompt_for_masterp "give a string to be encrypted:"]
     set exit_code [catch {exec echo $masterp | openssl $CIPHER_ALG -a -pass pass:$CONFIG_MP_KEY} encrypt ]
     if { $exit_code == 0 } {
         set $encrypt ""
@@ -226,7 +226,7 @@ proc main {} {
         }
 
         if { $options(cmp) != 0 } { # 1. propmpt for a string and return it encrypted
-            set masterp [set_masterp_for_env ]
+            set masterp [set_masterp_for_env]
             puts $masterp
             break
         }
