@@ -48,7 +48,7 @@ proc read_pass_file {} {
     global FILE_PASS
 
     set exit_code [catch {exec openssl $CIPHER_ALG -d -pass pass:$MASTER_PASS -in $FILE_PASS} pass_list]
-    if {$exit_code != 0 } {
+    if { $exit_code != 0 } {
         puts "Master password doesn't match with $FILE_PASS"
     }
 
@@ -81,7 +81,7 @@ proc init_masterp {from_env} {
     if { $from_env } {
         catch {set env_value "$env($CONFIG_MP)"} err
         set exit_code [catch {exec echo $env_value | openssl $CIPHER_ALG -d -a -pass pass:$CONFIG_MP_KEY} MASTER_PASS ]
-        if {$exit_code == 0 } { return }
+        if { $exit_code == 0 } { return }
 
         puts "Unable to read master-password from env-var"
     }
@@ -94,7 +94,7 @@ proc set_masterp_for_env {} {
 
     set masterp [prompt_for_masterp]
     set exit_code [catch {exec echo $masterp | openssl $CIPHER_ALG -a -pass pass:$CONFIG_MP_KEY} encrypt ]
-    if {$exit_code == 0 } {
+    if { $exit_code == 0 } {
         set $encrypt ""
     }
     return $encrypt
@@ -108,7 +108,7 @@ proc get_pass_val {type pass_key} {
     set exit_code [lindex $result 0]
     set pass_list [split [lindex $result 1] "\n" ]
 
-    if {$exit_code == 0 } {
+    if { $exit_code == 0 } {
         if { $type eq "i" } {
             set regex_str "\^\[ \\t\]\*i:\[ \\t]\*${pass_key}\[ \\t]\*,\(\.\+\)"
         } else {
@@ -131,7 +131,7 @@ proc dump_pass_file {filename} {
     set result [read_pass_file]
     set exit_code [lindex $result 0]
 
-    if {$exit_code == 0 } {
+    if { $exit_code == 0 } {
         if [catch {set fp [open $filename w] }] {
             puts "unable to create file $filename"
         } else {
@@ -146,12 +146,12 @@ proc create_pass_file {filename} {
     global FILE_PASS
     global CIPHER_ALG
 
-    if {[file exist $filename] != 1} {
+    if { [file exist $filename] != 1 } {
         puts "file $filename does not exist"
         return
     }
     set exit_code [catch {exec cp $FILE_PASS ${FILE_PASS}.bk } errmsg]
-    if {$exit_code == 0 } {
+    if { $exit_code == 0 } {
        puts "created backup: \[${FILE_PASS}.bk] for old file"
     }
 
@@ -159,28 +159,30 @@ proc create_pass_file {filename} {
 }
 # ------------------------------------------------------------------------------
 proc ssh {type user host pass} {
+    puts " tryng to connect to ${user}@$host with $pass"
     if { $type eq "i" } {
         regsub -all {[ \t]} $pass {} pass
         spawn ssh -i  $pass ${user}@$host
+
     } else {
         # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
         spawn ssh -o "StrictHostKeyChecking no" ${user}@$host
-            expect "assword:*"
-            send -- "$pass\r"
-            send -- "\r"
+        expect "assword:*"
+        send -- "$pass\r"
     }
     interact
+
 }
 # ------------------------------------------------------------------------------
 proc check_files {} {
     global FILE_HOSTS
     global FILE_PASS
 
-    if {[file exist $FILE_HOSTS] != 1} {
+    if { [file exist $FILE_HOSTS] != 1 } {
         puts "missing file $FILE_HOSTS "
         return 1
     }
-    if {[file exist $FILE_PASS] != 1} {
+    if { [file exist $FILE_PASS] != 1 } {
         puts "missing file $FILE_PASS "
         return 1
     }
@@ -289,5 +291,4 @@ proc main {} {
 
 # ------------------------------------------------------------------------------
 main
-
 
