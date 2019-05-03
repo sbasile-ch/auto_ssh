@@ -25,5 +25,5 @@ then
     fi
 fi
 
-${AUTO_SSH_DIR}/assh -- -mp $service $system $instance
+${AUTO_SSH_DIR}/auto_ssh.tcl -- -mp $service $system $instance
 
