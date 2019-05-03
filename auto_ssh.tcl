@@ -156,10 +156,15 @@ proc create_pass_file {filename} {
     }
 
     exec openssl $CIPHER_ALG -pass pass:$MASTER_PASS -in $filename -out $FILE_PASS
+
+    catch {exec cat $filename | tr "\t" " " |  sed -n -E -e {s/((, | $))/\1<-- (space here) /p} } warn_lines
+    if { $warn_lines ne "" } {
+        puts "\nAre you happy with these spaces/tabs ?\n\n $warn_lines"
+    }
 }
 # ------------------------------------------------------------------------------
 proc ssh {type user host pass} {
-    puts " tryng to connect to ${user}@$host with $pass"
+    puts " tryng to connect to ${user}@$host"
     if { $type eq "i" } {
         regsub -all {[ \t]} $pass {} pass
         spawn ssh -i  $pass ${user}@$host
