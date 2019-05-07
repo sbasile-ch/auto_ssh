@@ -159,7 +159,10 @@ proc create_pass_file {filename} {
 
     catch {exec cat $filename | tr "\t" " " |  sed -n -E -e {s/((, | $))/\1<-- (space here) /p} } warn_lines
     if { $warn_lines ne "" } {
-        puts "\nAre you happy with these spaces/tabs ?\n\n $warn_lines"
+        set F_FG_RED [exec tput setaf 1]
+        set F_RESET [exec tput sgr0]
+
+        puts "\n$F_FG_RED Are you happy with these spaces/tabs ? $F_RESET\n\n $warn_lines"
     }
 }
 # ------------------------------------------------------------------------------
