@@ -11,14 +11,15 @@ set PROG_DIR  [getDirectory]
 
 # read config from outside
 source "${PROG_DIR}/config"
+#source "${PROG_DIR}/external_commands.tcl"
 
 set MASTER_PASS ""
 set PARAMETERS {
     {c.arg  ""   "create a password-file, encrypting the file provided."}
     {d.arg  ""   "dump the password-file into the specified file."}
     {x.arg  ""   "extract only the specified password."}
-    {mp          "retrieve master-password from ENV."}
-    {cmp         "encrypt a string asked on prompt. (Useful to set the master-password in an ENV var)."}
+    {env         "retrieve master-password from ENV."}
+    {str         "encrypt a string asked on prompt. (Useful to set the master-password in an ENV var)."}
 }
 
 # ------------------------------------------------------------------------------
@@ -28,18 +29,19 @@ proc get_server_info {category nick1 nick2 nick3} {
     set host ""
     set user ""
     set pass_key ""
+    set external_cmd ""
 
     set fp [open $FILE_HOSTS r]
     while {-1 != [gets $fp line]} {
         regsub -all {[ \t]} $line {} line
         if [
-           regexp -nocase "${category},${nick1},${nick2},${nick3},\(\[\^,\]\+\),\(\[\^,\]\+\),\(\.\+\)\$" $line match user host pass_key
+           regexp -nocase "${category},${nick1},${nick2},${nick3},\(\[\^,\]\+\),\(\[\^,\]\+\),\(\[\^,\]\+\),\?\(\.\*\)" $line match user host pass_key external_cmd
            ] then {
            break
         }
     }
     close $fp
-    return [list $user $host $pass_key]
+    return [list $user $host $pass_key $external_cmd]
 }
 # ------------------------------------------------------------------------------
 proc read_pass_file {} {
@@ -166,7 +168,7 @@ proc create_pass_file {filename} {
     }
 }
 # ------------------------------------------------------------------------------
-proc ssh {type user host pass} {
+proc ssh {type user host pass ext_cmd} {
     puts " tryng to connect to ${user}@$host"
     if { $type eq "i" } {
         regsub -all {[ \t]} $pass {} pass
@@ -178,8 +180,15 @@ proc ssh {type user host pass} {
         expect "assword:*"
         send -- "$pass\r"
     }
-    interact
 
+    #if { $ext_cmd ne "" } {
+    #    #wait for prompt
+    #    #expect -re "> ?$"
+    #    expect -re "\[>~$\]"
+    #    external_cmd $user $host $pass $ext_cmd
+    #}
+
+    interact
 }
 # ------------------------------------------------------------------------------
 proc check_files {} {
@@ -228,13 +237,13 @@ proc main {} {
             break
         }
 
-        if { $options(cmp) != 0 } { # 1. propmpt for a string and return it encrypted
+        if { $options(str) != 0 } { # 1. propmpt for a string and return it encrypted
             set masterp [set_masterp_for_env]
             puts $masterp
             break
         }
 
-        init_masterp $options(mp)
+        init_masterp $options(env)
 
 
         if { $options(d) ne "" } {  # 2. dump
@@ -267,12 +276,13 @@ proc main {} {
         set user     [lindex $server_info 0]
         set host     [lindex $server_info 1]
         set pass_key [lindex $server_info 2]
+        set ext_cmd  [lindex $server_info 3]
 
         if { $pass_key eq "" } {
             puts "no match found for \[$category\] \[$nick1\] \[$nick2\] \[$nick3\] in $FILE_HOSTS"
         } else {
             if [
-               regexp -nocase "\(\[\^:\]\*\):\?(\.\*\)\$" $pass_key match type val
+               regexp -nocase "\(\[\^:\]\*\):\?\(\.\*\)\$" $pass_key match type val
                ] then {
 
                 if { $type eq "2fa" } {      # "2fa:" dual factor auth.  Not much we can do. Just print the ssh command
@@ -286,7 +296,7 @@ proc main {} {
                     if { $pass eq "" } {
                         puts "no pass found for type:\[${type}\] val:\[${val}\] in ${FILE_PASS}"
                     } else {
-                        ssh $type $user $host $pass
+                        ssh $type $user $host $pass $ext_cmd
                     }
                 }
             }
