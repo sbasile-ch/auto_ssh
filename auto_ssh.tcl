@@ -106,6 +106,7 @@ proc get_pass_val {type pass_key} {
     global MASTER_PASS
     set pass_val ""
 
+    puts "look up with pass-key: \[$pass_key]"
     set result [read_pass_file]
     set exit_code [lindex $result 0]
     set pass_list [split [lindex $result 1] "\n" ]
