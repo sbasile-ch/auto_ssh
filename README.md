@@ -110,7 +110,7 @@ Anyhow a warning will be issued when compiling you clear `passwords.txt`, if spa
 
 Once the text file has been completed, you need to encrypt it:
 ```shell
-assh -- -c passwords.txt
+auto_ssh.tcl -- -c passwords.txt
 ```
 Providing a master-password at this stage, will encrypt the clear text file into a `psw.enc` in the directory where `auto_ssh.tcl` is installed (ex. `${HOME}/auto_ssh/psw.enc`)
 
@@ -121,7 +121,7 @@ It's always better to remove the clear text file and to leave nothing not encryp
 To dump clearly the content of the encrypted passwords-file, run:
 
 ```shell
-assh -- -d passwords.txt
+auto_ssh.tcl -- -d passwords.txt
 ```
 
 This will prompt for the _master password_ and, if it is correct, it will decrypt the content into the clear text file _passwords.txt_. This can be useful for changing the current password-file, in a sequence of decrypt_into_temp_file/edit_temp_file/re-encrypt_from_temp_file/delete_temp_file.
@@ -173,7 +173,7 @@ The 2 steps to use the `-env` flag would then be:
 
 ```shell
 # 1. - define an encrypted value for the master password
-assh -- -str   # suppose it returns [U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=]
+auto_ssh.tcl -- -str   # suppose it returns [U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=]
 
 # 2. - assign that value to the variable named in CONFIG_MP 
 export AUTO_SSH_CONFIG_MP=U2FsdGVkX19en7cv1Mv/0E1xaFgM4lvLt1Hg+o69Le8=
