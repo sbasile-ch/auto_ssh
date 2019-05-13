@@ -2,14 +2,16 @@
 
 AUTO_SSH_DIR=${HOME}/auto_ssh
 
-CHOICE_VARS=('' '' '')
+CHOICE_VARS=('' '' '' '')   # category / nick1 / nick2 / nick3
 
 #--------------------------------------
 function get_column {
     local C1=$1
     local C2=$2
-    local col=$3
-    OPTIONS=$(cat ${AUTO_SSH_DIR}/known_hosts | tr -d '[:blank:]' | awk -v C1="$C1" -v C2="$C2" -v c="$col" 'BEGIN{FS=","} {if(NF>=7 && (C1=="" || ($1==C1 && (C2=="" || $2==C2)))){print $c}}' | sort -u)
+    local C3=$3
+    local col=$4
+    OPTIONS=$(cat ${AUTO_SSH_DIR}/known_hosts | tr -d '[:blank:]' | awk -v C1="$C1" -v C2="$C2" -v C3="$C3" -v c="$col" \
+        'BEGIN{FS=","} {if(NF>=7 && (C1=="" || ($1==C1 && (C2=="" || ($2==C2 && (C3=="" || $3==C3)))))){print $c}}' | sort -u)
 }
 #--------------------------------------
 function sep {
@@ -20,7 +22,7 @@ function sep {
 function choose {
     local max=${#CHOICE_VARS[@]}
     for c in $(seq 1 $max); do
-        get_column "${CHOICE_VARS[0]}" "${CHOICE_VARS[1]}" $c
+        get_column "${CHOICE_VARS[0]}" "${CHOICE_VARS[1]}" "${CHOICE_VARS[2]}" $c
         local num_options=${#OPTIONS[@]}
         if [ $num_options ]
         then
