@@ -26,7 +26,7 @@ function choose {
         local num_options=${#OPTIONS[@]}
         if [ $num_options ]
         then
-            echo $(printf '=%.0s' {1..80})
+            sep
             select option in ${OPTIONS[*]};
             do
                 if [ "$option" ];
