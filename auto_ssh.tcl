@@ -177,7 +177,7 @@ proc ssh {type user host pass ext_cmd} {
 
     } else {
         # -o "StrictHostKeyChecking no"  to avoid typing 'yes' on "Are you sure you want to continue connecting (yes/no)?"
-        spawn ssh -o "StrictHostKeyChecking no" -t ${user}@$host "HISTCONTROL=ignoreboth bash"
+        spawn ssh -o "StrictHostKeyChecking no" -t ${user}@$host "HISTCONTROL=ignoreboth bash -l"
         expect "assword:*"
         send -- "$pass\r"
     }
